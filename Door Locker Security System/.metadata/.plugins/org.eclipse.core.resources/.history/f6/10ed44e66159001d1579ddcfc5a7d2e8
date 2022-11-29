@@ -1,0 +1,167 @@
+/*
+ * MC2.c
+ *
+ *  Created on: 28 Oct 2022
+ *      Author: EGYPT
+ */
+#include<avr/io.h>
+#include"DcMotor.h"
+#include"buzzer.h"
+#include"external_eeprom.h"
+#include"timer1.h"
+#include"uart.h"
+#include"twi.h"
+#include"MC2.h"
+#include"util/delay.h"
+
+uint8 g_passStored[PASSWORD_LENGTH], g_passRecieved[PASSWORD_LENGTH], i,
+		g_flag_repeat = 0, g_flag_change_pass = 0;
+uint16 g_second = 0;
+int main(void) {
+	UART_ConfigType UART_config = { EIGHT_BIT, EVEN, ONE_BIT, UART_BAUDRATE };
+	UART_init(&UART_config);
+	TWI_ConfigType TWI_config = { TWI_MC_SLAVE_ADDRESS, FAST };
+	TWI_init(&TWI_config);
+	DcMotor_init();
+	Buzzer_init();
+	Timer1_ConfigType Timer1_config = { TIMER1_INITIAL_VALUE, TIMER1_OCRA_VALUE,
+			F_CPU_256, COMPARE_OCR };
+	Timer1_init(&Timer1_config);
+	Timer1_setCallBack(secondPassed);
+	SREG |= (1 << 7);
+	createPassword();
+	while (1) {
+
+		if (UART_recieveByte() == '+') {
+			openDoorOption();
+			continue;
+		} else if (UART_recieveByte() == '-') {
+			changePasswordOption();
+			if (g_flag_change_pass == 1) {
+				g_flag_change_pass = 0;
+				break;
+			}
+		}
+	}
+
+}
+
+
+void createPassword(void) {
+	while (1) {
+		uint8 pass1[PASSWORD_LENGTH];
+		while (UART_recieveByte() != getready)
+			;
+		UART_sendByte(ready);
+		recievePassword(pass1);
+		UART_sendByte(done);
+		while (UART_recieveByte() != getready)
+			;
+		UART_sendByte(ready);
+		recievePassword(g_passRecieved);
+		UART_sendByte(done);
+		if (comparePassword(pass1, g_passRecieved, PASSWORD_LENGTH)) {
+			storePassword(PASS_ADD, g_passRecieved);
+			UART_sendByte(MATCHED);
+			return;
+		} else {
+			UART_sendByte(UNMATCHED);
+			continue;
+		}
+	}
+}
+void secondPassed(void) {
+	g_second++;
+}
+void wait(uint16 time) {
+	g_second = 0;
+	while (g_second < time)
+		;
+}
+void recievePassword(uint8 *pass_r) {
+	for (i = 0; i < PASSWORD_LENGTH; i++) {
+		pass_r[i] = UART_recieveByte();
+	}
+}
+void storePassword(uint16 pass_s_addr, uint8 *pass_s) {
+	for (i = 0; i < PASSWORD_LENGTH; i++) {
+		EEPROM_writeByte(pass_s_addr + i, pass_s[i]);
+		_delay_ms(100);
+	}
+}
+uint8 comparePassword(uint8 *pass1_c, uint8 *pass2_c, uint8 pass_size) {
+	for (i = 0; i < pass_size; i++) {
+		if (pass1_c[i] != pass2_c[i])
+			return PASS_NOT_MATCHED;
+	}
+	return PASS_MATCH;
+}
+
+void retrivePassword(void) {
+	for (i = 0; i < PASSWORD_LENGTH; i++) {
+		EEPROM_readByte(PASS_ADD + i, g_passStored + i);
+	}
+}
+
+void openDoorOption(void) {
+	while (1) {
+		while (UART_recieveByte() != getready)
+			;
+		UART_sendByte(ready);
+		recievePassword(g_passRecieved);
+		UART_sendByte(done);
+		retrivePassword();
+		if (comparePassword(g_passRecieved, g_passStored,
+				PASSWORD_LENGTH)==PASS_MATCH) {
+			UART_sendByte(MATCHED);
+			while (UART_recieveByte() != UNLOCK)
+				;
+			DcMotor_Rotate(CW, MAX_SPEED);
+			wait(TIME_OF_UNLOCKING);
+			DcMotor_Rotate(STOP, MAX_SPEED);
+			while (UART_recieveByte() != LOCK)
+				;
+			DcMotor_Rotate(ACW, MAX_SPEED);
+			wait(TIME_OF_LOCKING);
+			DcMotor_Rotate(STOP, MAX_SPEED);
+			return;
+		} else if (comparePassword(g_passRecieved, g_passStored,
+				PASSWORD_LENGTH) == PASS_NOT_MATCHED) {
+			_delay_ms(100);
+			UART_sendByte(UNMATCHED);
+			if (UART_recieveByte() == WARNING) {
+				Buzzer_on();
+				wait(TIME_SYSTEM_IS_LOCKED);
+				Buzzer_off();
+				return;
+			} else if (UART_recieveByte() == CONTINUE) {
+				continue;
+			}
+		}
+	}
+}
+void changePasswordOption(void) {
+	while (1) {
+		while (UART_recieveByte() != getready)
+			;
+		UART_sendByte(ready);
+		recievePassword(g_passRecieved);
+		UART_sendByte(done);
+		retrivePassword();
+		if (comparePassword(g_passRecieved, g_passStored, PASSWORD_LENGTH)) {
+			UART_sendByte(MATCHED);
+			g_flag_change_pass = 1;
+			break;
+		} else {
+			UART_sendByte(UNMATCHED);
+			if (UART_recieveByte() == WARNING) {
+				Buzzer_on();
+				wait(TIME_SYSTEM_IS_LOCKED);
+				Buzzer_off();
+				break;
+			} else if (UART_recieveByte() == CONTINUE) {
+				continue;
+			}
+		}
+	}
+}

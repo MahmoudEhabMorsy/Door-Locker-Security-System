@@ -1,0 +1,105 @@
+/*
+ * MC1.h
+ *
+ *  Created on: 31 Oct 2022
+ *      Author: EGYPT
+ */
+
+#ifndef MC1_H_
+#define MC1_H_
+#include<avr/io.h>
+#include<util/delay.h>
+#include"keypad.h"
+#include"lcd.h"
+#include"uart.h"
+#include"timer1.h"
+/*******************************************************************************
+ *                                Definitions                                  *
+ *******************************************************************************/
+
+#define PASSWORD_LENGTH 5	/*password length*/
+#define enter           13
+#define UART_BAUDRATE 9600
+#define TIMER1_INITIAL_VALUE 0
+#define TIMER1_OCRA_VALUE 31250
+#define ONE_SECOND_DELAY  1
+/* Definitions used to communicate with MC2 */
+#define UNLOCK			0x10
+#define LOCK			0x50
+#define LOCKED			0xB0
+#define UNLOCKED		0xB1
+#define CONTINUE		0XAB
+#define MATCHED	0x01
+#define UNMATCHED 0xff
+#define WARNING 0
+#define getready			0xA0
+#define ready				0xA1
+#define	done				0xA2
+/*Definitions for calculating time using timer1*/
+#define TIME_OF_UNLOCKING 15
+#define TIME_OF_LOCKING   15
+#define TIME_HOLDING_THE_MOTOR 3
+#define TIME_SYSTEM_IS_LOCKED 60
+
+/*******************************************************************************
+ *                                Global Variables                                  *
+ *******************************************************************************/
+uint8 i, status, counter = 0;
+uint8 key[5] = { };
+uint16 g_second = 0;
+uint8 g_flag_change_pass = 0;
+
+/*******************************************************************************
+ *                      Functions Prototypes                                   *
+ *******************************************************************************/
+/*
+ * Description :
+ * a function to send instructions and data to the other MC to create the password for the system
+ */
+void createPassword(void);
+/*
+ * Description :
+ * a function display options for the user and return the user's choice
+ */
+uint8 mainOptionsMenu(void);
+/*
+ * Description :
+ * a function to send instructions to the other MC to open the door
+ * the function send the password entered by the user to the other MC then wait answer
+ * if the answer is that the passwords are matched it displays the status of the door
+ * if not it let the user send the password two more times to the other MC and if the user failed to get the password right it locks the system for 1 minute and prevent any input form the user
+ */
+void openDoorOption(void);
+/*
+ * Description :
+ * a function to send instructions to the other MC to change the password stored in the eeprom
+ * the function asks for the old password and then send it to the other MC and waits for an answer
+ * if the answer is that the passwords are matched it sends the user to the option of creating a new password and send it to the other MC
+ * if not it let the user send the password two more times to the other MC and if the user failed to get the password right it locks the system for 1 minute and prevent any input form the user
+ */
+void changePasswordOption(void);
+/*
+ * Description :
+ * a function to send password using uart
+ * Inputs:an array to send the password in it
+ */
+void sendPassword(uint8 *pass);
+/*
+ * Description :
+ * callback function for the timer's ISR
+ */
+void secondPassed(void);
+/*
+ * Description :
+ * a function to calculate time using timer
+ * Inputs: time to be counted
+ */
+void wait(uint16 time);
+/*
+ * Description :
+ * a function to calculate time using timer and displaying the remaining time
+ * Inputs: time to be counted
+ */
+void waitWithTimer(uint16 time);
+
+#endif /* MC1_H_ */

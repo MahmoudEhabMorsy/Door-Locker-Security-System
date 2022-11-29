@@ -1,0 +1,43 @@
+/*
+ * timer1.c
+ *
+ *  Created on: 28 Oct 2022
+ *      Author: EGYPT
+ */
+#include"timer1.h"
+#include<avr/io.h>
+#include<avr/interrupt.h>
+static volatile void (*g_callBackPtr)(void) = NULL_PTR;
+
+ISR(TIMER1_COMPA_vect){
+	(*g_callBackPtr)();
+}
+ISR(TIMER1_OVF_vect){
+	(*g_callBackPtr)();
+}
+
+
+void Timer1_init(const Timer1_ConfigType*Config_Ptr){
+if((Config_Ptr->mode)!=0){
+TCCR1A=(Config_Ptr->mode);
+}
+else{
+	TCCR1B=((Config_Ptr->mode)<<3);
+	OCR1A=Config_Ptr->compare_value;
+	TIMSK=(1<<OCIE1A);
+}
+TCCR1B|=(Config_Ptr->prescaler);
+TCNT1=Config_Ptr->initial_value;
+TIMSK|=(1<<TOIE1);
+}
+
+void Timer1_deInit(void){
+TCCR1A=0;
+TCCR1B=0;
+TIMSK=0;
+}
+
+void Timer1_setCallBack(void(*a_ptr)(void)){
+	g_callBackPtr = a_ptr;
+}
+

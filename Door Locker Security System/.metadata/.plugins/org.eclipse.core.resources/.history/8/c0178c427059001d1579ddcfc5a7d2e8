@@ -1,0 +1,55 @@
+/*
+ * MC2.h
+ *
+ *  Created on: 31 Oct 2022
+ *      Author: EGYPT
+ */
+
+#ifndef MC2_H_
+#define MC2_H_
+#define PASSWORD_LENGTH 5
+#define PASS_ADD 0x00
+#define UNLOCK			0x10
+#define LOCK			0x50
+#define LOCKED			0xB0
+#define UNLOCKED		0xB1
+#define TIME_OF_UNLOCKING 15
+#define TIME_HOLDING_THE_MOTOR 3
+#define TIME_OF_LOCKING   15
+#define TIME_SYSTEM_IS_LOCKED 60
+#define CONTINUE		0XAB
+#define getready			0xA0
+#define ready				0xA1
+#define	done				0xA2
+#define MATCHED	0x01
+#define UNMATCHED 0xff
+#define WARNING 0
+#define PASS_MATCH 1
+#define PASS_NOT_MATCHED 0
+#define UART_BAUDRATE 9600
+#define TIMER1_INITIAL_VALUE 0
+#define TIMER1_OCRA_VALUE 31250
+
+
+
+
+uint8 g_passStored[PASSWORD_LENGTH], g_passRecieved[PASSWORD_LENGTH], i,
+		g_flag_repeat = 0, g_flag_change_pass = 0, g_status;
+uint16 g_second = 0;
+
+
+
+
+
+void createPassword(void);
+void secondPassed(void);
+void wait(uint16 time);
+uint8 comparePassword(uint8 *pass1_c, uint8 *pass2_c, uint8 pass_size);
+void recievePassword(uint8*);
+void storePassword(uint16, uint8*);
+void retrivePassword(void);
+void openDoorOption(void);
+void changePasswordOption(void);
+
+
+#endif /* MC2_H_ */

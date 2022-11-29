@@ -1,0 +1,38 @@
+/*
+ * MC1.h
+ *
+ *  Created on: 31 Oct 2022
+ *      Author: EGYPT
+ */
+
+#ifndef MC1_H_
+#define MC1_H_
+#define PASSWORD_LENGTH 5
+#define enter           13
+#define UNLOCK			0x10
+#define LOCK			0x50
+#define CONTINUE		0XAB
+#define MATCHED	0x01
+#define UNMATCHED 0xff
+#define WARNING 0
+#define TIME_OF_UNLOCKING 15
+#define TIME_OF_LOCKING   15
+#define TIME_HOLDING_THE_MOTOR 3
+#define TIME_SYSTEM_IS_LOCKED 60
+#define getready			0xA0
+#define ready				0xA1
+#define	done				0xA2
+#define UART_BAUDRATE 9600
+#define TIMER1_INITIAL_VALUE 0
+#define TIMER1_OCRA_VALUE 31250
+#define ONE_SECOND_DELAY  1
+
+
+void createPassword(void);
+uint8 mainOptionsMenu(void);
+void sendPassword(uint8 *pass);
+void secondPassed(void);
+void wait(uint16 time);
+
+
+#endif /* MC1_H_ */

@@ -1,0 +1,25 @@
+/*
+ * timer1.h
+ *
+ *  Created on: 28 Oct 2022
+ *      Author: EGYPT
+ */
+
+#ifndef TIMER1_H_
+#define TIMER1_H_
+
+typedef enum{
+	NORMAL,COMPARE_OCR,COMPARE_ICR
+}Timer1_Mode;
+typedef enum{
+NO_CLOCK,F_CPU_CLOCK,F_CPU_8,F_CPU_64,F_CPU_256,F_CPU_1024,F_TIMER1_EXTERNAL_FALLING,F_TIMER1_EXTERNAL_RISING
+}Timer1_Prescaler;
+typedef struct{
+	uint16 initial_value;
+	uint16 compare_value; /*used in compare mode only*/
+	Timer1_Prescaler prescaler;
+	Timer1_Mode mode;
+}Timer1_ConfigType;
+
+
+#endif /* TIMER1_H_ */

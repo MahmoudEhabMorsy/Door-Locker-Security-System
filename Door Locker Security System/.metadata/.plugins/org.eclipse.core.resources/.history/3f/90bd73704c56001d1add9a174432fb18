@@ -1,0 +1,21 @@
+/*
+ * timer1.c
+ *
+ *  Created on: 28 Oct 2022
+ *      Author: EGYPT
+ */
+#include"timer1.h"
+
+
+void Timer1_init(const Timer1_ConfigType*Config_Ptr){
+
+}
+
+void Timer1_deInit(void){
+
+}
+
+void Timer1_setCallBack(void(*a_ptr)(void)){
+
+}
+
